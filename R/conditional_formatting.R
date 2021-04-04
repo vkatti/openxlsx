@@ -230,7 +230,9 @@
 #' df <- data.frame(col1 = rep(c(-1,0,1), 3), col2 = rep(c(-1,0,1), 3), col3 = rep(c(-1,0,1), 3))
 #' writeData(wb, "iconSet", df, colNames = FALSE) ## write data.frame
 #'
-#' ## rule is one of names of the icons sets i.e. "iconSet","3Arrows","3ArrowsGray","3Signs","3TrafficLights2","3Symbols","3Symbols2","3Flags".
+#' ## rule is one of following names of the icons sets: 
+#' "iconSet","3Arrows","3ArrowsGray","3Signs","3TrafficLights2",
+#' "3Symbols","3Symbols2","3Flags".
 #' ## if rule is "iconSet", default icon set of Red-Amber-Green Circles is used.
 #' ## limits must be a list with 2 named character vectors 'type' and 'val'
 #' ## 'type' must have length 3 with elements being either 'num' or 'percent'

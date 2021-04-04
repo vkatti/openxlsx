@@ -29,7 +29,7 @@ conditionalFormatting(
 
 \item{style}{A style to apply to those cells that satisfy the rule. Default is createStyle(fontColour = "#9C0006", bgFill = "#FFC7CE")}
 
-\item{type}{Either 'expression', 'colourScale', 'databar', 'duplicates', 'beginsWith', 
+\item{type}{Either 'expression', 'colourScale', 'iconSet', 'databar', 'duplicates', 'beginsWith', 
 'endsWith', 'topN', 'bottomN', 'contains' or 'notContains' (case insensitive).}
 
 \item{...}{See below}
@@ -50,6 +50,19 @@ If type == "colourScale"
 \itemize{
   \item{style is a vector of colours with length 2 or 3}
   \item{rule can be NULL or a vector of colours of equal length to styles}
+}
+
+If type == "iconSet"
+\itemize{
+  \item{style is ignored}
+  \item{rule is a character vector specifying the name of the icon set of length 1}
+  \item{...
+  \itemize{
+    \item{\bold{showvalue} If FALSE the cell value is hidden. Default TRUE.}
+    \item{\bold{reverse} If TRUE icons are applied in reverse order. Default FALSE}
+    \item{\bold{limits} list of 2 vectors, each of length 3 having names 'type' and 'val'. See Examples}
+     }
+   }
 }
 
 If type == "databar"
@@ -119,6 +132,7 @@ addWorksheet(wb, "notcontainsText")
 addWorksheet(wb, "beginsWith")
 addWorksheet(wb, "endsWith")
 addWorksheet(wb, "colourScale", zoom = 30)
+addWorksheet(wb, "iconSet")
 addWorksheet(wb, "databar")
 addWorksheet(wb, "between")
 addWorksheet(wb, "topN")
@@ -219,7 +233,7 @@ conditionalFormatting(wb, "endsWith", cols = 1, rows = 1:100, type = "endsWith",
 df <- read.xlsx(system.file("extdata", "readTest.xlsx", package = "openxlsx"), sheet = 4)
 writeData(wb, "colourScale", df, colNames = FALSE) ## write data.frame
 
-## rule is a vector or colours of length 2 or 3 (any hex colour or any of colours())
+## rule is a vector of colours of length 2 or 3 (any hex colour or any of colours())
 ## If rule is NULL, min and max of cells is used. Rule must be the same length as style or NULL.
 conditionalFormatting(wb, "colourScale",
   cols = 1:ncol(df), rows = 1:nrow(df),
@@ -230,6 +244,38 @@ conditionalFormatting(wb, "colourScale",
 
 setColWidths(wb, "colourScale", cols = 1:ncol(df), widths = 1.07)
 setRowHeights(wb, "colourScale", rows = 1:nrow(df), heights = 7.5)
+
+## iconSet displays icons inside cells based on cell value
+df <- data.frame(col1 = rep(c(-1,0,1), 3), col2 = rep(c(-1,0,1), 3), col3 = rep(c(-1,0,1), 3))
+writeData(wb, "iconSet", df, colNames = FALSE) ## write data.frame
+
+## rule is one of following names of the icons sets: 
+"iconSet","3Arrows","3ArrowsGray","3Signs","3TrafficLights2",
+"3Symbols","3Symbols2","3Flags".
+## if rule is "iconSet", default icon set of Red-Amber-Green Circles is used.
+## limits must be a list with 2 named character vectors 'type' and 'val'
+## 'type' must have length 3 with elements being either 'num' or 'percent'
+## 'val' must have same length as 'type' with values in ascending order.
+conditionalFormatting(wb, "iconSet",
+  cols = 1, rows = 1:nrow(df),
+  type = "iconSet",
+  rule = "iconSet",
+  limits = list(type = c("percent","percent","percent"), val = c("0","33","67"))
+)
+conditionalFormatting(wb, "iconSet",
+  cols = 2, rows = 1:nrow(df),
+  type = "iconSet",
+  rule = "3Symbols", # Red-Amber-Green Circles with cross, warning and tick inside
+  limits = list(type = c("percent","percent","percent"), val = c("0","33","67")),
+  showValue = FALSE # show Icons only
+)
+conditionalFormatting(wb, "iconSet",
+  cols = 3, rows = 1:nrow(df),
+  type = "iconSet",
+  rule = "3Symbols2", # Red-Amber-Green cross, warning and tick symbols
+  limits = list(type = c("percent","percent","percent"), val = c("0","33","67")),
+  reverse = TRUE
+)
 
 ## Databars
 writeData(wb, "databar", -5:5)
