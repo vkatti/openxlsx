@@ -2867,11 +2867,41 @@ Workbook$methods(
           values[1],
           values[2]
         )
+    } else if (type == "iconSet") {
+      if (formula != "iconSet") {
+      cfRule <-
+        sprintf(
+          '<cfRule type="iconSet" priority="1"><iconSet iconSet="%s" showValue="%s" reverse="%s"><cfvo type="%s" val="%s"/><cfvo type="%s" val="%s"/><cfvo type="%s" val="%s"/></iconSet></cfRule>',
+          formula,
+          params$showValue,
+          params$reverse,
+          params$limits[['type']][1],
+          params$limits[['val']][1],
+          params$limits[['type']][2],
+          params$limits[['val']][2],
+          params$limits[['type']][3],
+          params$limits[['val']][3]
+          
+        )
+      } else {
+        cfRule <-
+          sprintf(
+            '<cfRule type="iconSet" priority="1"><iconSet showValue="%s" reverse="%s"><cfvo type="%s" val="%s"/><cfvo type="%s" val="%s"/><cfvo type="%s" val="%s"/></iconSet></cfRule>',
+            params$showValue,
+            params$reverse,
+            params$limits[['type']][1],
+            params$limits[['val']][1],
+            params$limits[['type']][2],
+            params$limits[['val']][2],
+            params$limits[['type']][3],
+            params$limits[['val']][3]
+          )
+      }
     }
 
     worksheets[[sheet]]$conditionalFormatting <<-
       append(worksheets[[sheet]]$conditionalFormatting, cfRule)
-
+    
     names(worksheets[[sheet]]$conditionalFormatting) <<- nms
 
     invisible(0)

@@ -14,7 +14,7 @@
 #' @param rows Rows to apply conditional formatting to
 #' @param rule The condition under which to apply the formatting. See examples.
 #' @param style A style to apply to those cells that satisfy the rule. Default is createStyle(fontColour = "#9C0006", bgFill = "#FFC7CE")
-#' @param type Either 'expression', 'colourScale', 'databar', 'duplicates', 'beginsWith', 
+#' @param type Either 'expression', 'colourScale', 'iconSet', 'databar', 'duplicates', 'beginsWith', 
 #' 'endsWith', 'topN', 'bottomN', 'contains' or 'notContains' (case insensitive).
 #' @param ... See below
 #' @details See Examples.
@@ -29,6 +29,19 @@
 #' \itemize{
 #'   \item{style is a vector of colours with length 2 or 3}
 #'   \item{rule can be NULL or a vector of colours of equal length to styles}
+#' }
+#'
+#' If type == "iconSet"
+#' \itemize{
+#'   \item{style is ignored}
+#'   \item{rule is a character vector specifying the name of the icon set of length 1}
+#'   \item{...
+#'   \itemize{
+#'     \item{\bold{showvalue} If FALSE the cell value is hidden. Default TRUE.}
+#'     \item{\bold{reverse} If TRUE icons are applied in reverse order. Default FALSE}
+#'     \item{\bold{limits} list of 2 vectors, each of length 3 having names 'type' and 'val'. See Examples}
+#'      }
+#'    }
 #' }
 #'
 #' If type == "databar"
@@ -100,6 +113,7 @@
 #' addWorksheet(wb, "beginsWith")
 #' addWorksheet(wb, "endsWith")
 #' addWorksheet(wb, "colourScale", zoom = 30)
+#' addWorksheet(wb, "iconSet")
 #' addWorksheet(wb, "databar")
 #' addWorksheet(wb, "between")
 #' addWorksheet(wb, "topN")
@@ -200,7 +214,7 @@
 #' df <- read.xlsx(system.file("extdata", "readTest.xlsx", package = "openxlsx"), sheet = 4)
 #' writeData(wb, "colourScale", df, colNames = FALSE) ## write data.frame
 #'
-#' ## rule is a vector or colours of length 2 or 3 (any hex colour or any of colours())
+#' ## rule is a vector of colours of length 2 or 3 (any hex colour or any of colours())
 #' ## If rule is NULL, min and max of cells is used. Rule must be the same length as style or NULL.
 #' conditionalFormatting(wb, "colourScale",
 #'   cols = 1:ncol(df), rows = 1:nrow(df),
@@ -211,6 +225,36 @@
 #'
 #' setColWidths(wb, "colourScale", cols = 1:ncol(df), widths = 1.07)
 #' setRowHeights(wb, "colourScale", rows = 1:nrow(df), heights = 7.5)
+#' 
+#' ## iconSet displays icons inside cells based on cell value
+#' df <- data.frame(col1 = rep(c(-1,0,1), 3), col2 = rep(c(-1,0,1), 3), col3 = rep(c(-1,0,1), 3))
+#' writeData(wb, "iconSet", df, colNames = FALSE) ## write data.frame
+#'
+#' ## rule is one of names of the icons sets i.e. "iconSet","3Arrows","3ArrowsGray","3Signs","3TrafficLights2","3Symbols","3Symbols2","3Flags".
+#' ## if rule is "iconSet", default icon set of Red-Amber-Green Circles is used.
+#' ## limits must be a list with 2 named character vectors 'type' and 'val'
+#' ## 'type' must have length 3 with elements being either 'num' or 'percent'
+#' ## 'val' must have same length as 'type' with values in ascending order.
+#' conditionalFormatting(wb, "iconSet",
+#'   cols = 1, rows = 1:nrow(df),
+#'   type = "iconSet",
+#'   rule = "iconSet",
+#'   limits = list(type = c("percent","percent","percent"), val = c("0","33","67"))
+#' )
+#' conditionalFormatting(wb, "iconSet",
+#'   cols = 2, rows = 1:nrow(df),
+#'   type = "iconSet",
+#'   rule = "3Symbols", # Red-Amber-Green Circles with cross, warning and tick inside
+#'   limits = list(type = c("percent","percent","percent"), val = c("0","33","67")),
+#'   showValue = FALSE # show Icons only
+#' )
+#' conditionalFormatting(wb, "iconSet",
+#'   cols = 3, rows = 1:nrow(df),
+#'   type = "iconSet",
+#'   rule = "3Symbols2", # Red-Amber-Green cross, warning and tick symbols
+#'   limits = list(type = c("percent","percent","percent"), val = c("0","33","67")),
+#'   reverse = TRUE
+#' )
 #'
 #' ## Databars
 #' writeData(wb, "databar", -5:5)
@@ -303,6 +347,8 @@ conditionalFormatting <-
 
     if (type %in% c("colorscale", "colourscale")) {
       type <- "colorScale"
+    } else if (type == "iconset") {
+      type <- "iconSet"
     } else if (type == "databar") {
       type <- "dataBar"
     } else if (type == "duplicates") {
@@ -323,7 +369,7 @@ conditionalFormatting <-
       type <- "bottomN"
     } else if (type != "expression") {
       stop(
-        "Invalid type argument.  Type must be one of 'expression', 'colourScale', 'databar', 'duplicates', 'beginsWith', 'endsWith', 'contains' or 'notContains'"
+        "Invalid type argument.  Type must be one of 'expression', 'colourScale', 'iconSet', 'databar', 'duplicates', 'beginsWith', 'endsWith', 'contains' or 'notContains'"
       )
     }
 
@@ -366,6 +412,48 @@ conditionalFormatting <-
 
       values <- rule
       rule <- style
+    } else if (type == "iconSet") {
+      # type == "iconSet"
+      # - style is ignored
+      # - rule is one of names of the icons sets i.e. "iconSet","3Arrows","3ArrowsGray","3Signs","3TrafficLights2","3Symbols","3Symbols2","3Flags".
+      
+      style <- NULL
+      
+      if (!is.null(rule)) {
+        if (!rule %in% c("iconSet","3Arrows","3ArrowsGray","3Signs","3TrafficLights2","3Symbols","3Symbols2","3Flags")) {
+          stop("If type == 'iconSet', rule must be one of 'iconSet','3Arrows','3ArrowsGray','3Signs','3TrafficLights2','3Symbols','3Symbols2,'3Flags'")
+        }
+      } else stop("If type == 'iconSet', rule must not be NULL. rule must be one of 'iconSet','3Arrows','3ArrowsGray','3Signs','3TrafficLights2','3Symbols','3Symbols2,'3Flags'")
+      
+      
+      ## Additional parameters passed by ...
+      if ("showValue" %in% names(params)) {
+        params$showValue <- as.integer(params$showValue)
+        if (is.na(params$showValue)) {
+          stop("showValue must be 0/1 or TRUE/FALSE")
+        }
+      } else {
+        params$showValue <- 1 # show values by default
+      }
+      
+      if ("reverse" %in% names(params)) {
+        params$reverse <- as.integer(params$reverse)
+        if (is.na(params$reverse)) {
+          stop("reverse must be 0/1 or TRUE/FALSE")
+        }
+      } else {
+        params$reverse <- 0 # do not reverse by default
+      }
+
+      if (!"limits" %in% names(params)) {
+        params$limits <- list(type = c("percent","percent","percent"), val = c("0","33","67")) # default limits
+      } else {
+        stopifnot('limits must be a list of 2 characters vectors with names "type" and "val", each of length 3' = all.equal(names(params$limits), c("type", "val")))
+        stopifnot('limits$type must have either "percent" or "num"' = all(params$limits[['type']] %in% c("percent","num")))
+        stopifnot('limits$val must have values that can be converted to integers' = all(!is.na(as.integer(params$limits[['val']]))))
+        stopifnot('limits$type must be character vector of length 3' = length(params$limits[['type']]) == 3)
+        stopifnot('limits$val must be character vector of length 3' = length(params$limits[['val']]) == 3)
+      }
     } else if (type == "dataBar") {
       # type == "databar"
       # - style is a vector of colours of length 2 or 3
@@ -631,8 +719,6 @@ conditionalFormatting <-
       values <- params
       rule <- style
     }
-
-
 
     invisible(
       wb$conditionalFormatting(
